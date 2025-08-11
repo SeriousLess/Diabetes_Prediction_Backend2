@@ -12,7 +12,7 @@ app = FastAPI()
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],  # Permitir todo temporalmente
+    allow_origins=["https://diabetes-prediction-frontend-auwy.onrender.com"],
     #allow_origins=["http://localhost:5173"],  # Cambia esto en producción
     allow_credentials=True,
     allow_methods=["*"],
