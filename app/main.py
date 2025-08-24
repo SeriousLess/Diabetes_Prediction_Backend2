@@ -1,20 +1,19 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from app.core.config import settings
 
 from app.database.connection import Base, engine
-from app.models import registro_model  # importa tus modelos
-
+from app.models import registro_model
 from app.routes import user_route, predict_route
 
 Base.metadata.create_all(bind=engine)
 
 app = FastAPI()
 
+# CORS
 app.add_middleware(
     CORSMiddleware,
-    #allow_origins=["https://diabetes-prediction-frontend-auwy.onrender.com"],
-    #allow_origins=["http://localhost:5173"],  # Cambia esto en producción
-    allow_origins=["*"],  # Permitir todos los orígenes (solo para desarrollo)
+    allow_origins=settings.cors_list,  # 👈 ahora usa la lista
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
