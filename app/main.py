@@ -13,6 +13,7 @@ app = FastAPI()
 # CORS
 app.add_middleware(
     CORSMiddleware,
+    #allow_origins=["https://diabetes-prediction-frontend0.onrender.com"],
     allow_origins=settings.cors_list,  # 👈 ahora usa la lista
     allow_credentials=True,
     allow_methods=["*"],
