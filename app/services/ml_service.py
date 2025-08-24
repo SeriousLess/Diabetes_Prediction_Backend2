@@ -2,7 +2,7 @@ import joblib
 import pandas as pd
 from pathlib import Path
 
-#Para ignorar los errores de warning en el terminal
+# Para ignorar los errores de warning en el terminal
 import warnings
 warnings.filterwarnings("ignore", category=UserWarning)
 ###################################################
@@ -32,7 +32,8 @@ def predecir_diabetes(paciente_dict: dict):
     prediccion = modelo.predict(paciente_escalado)
     probabilidad = modelo.predict_proba(paciente_escalado)[0][1]
 
+    # ⚠️ Convertir a tipos nativos de Python
     return {
         "prediccion": int(prediccion[0]),
-        "probabilidad": round(probabilidad, 4)
+        "probabilidad": float(round(probabilidad, 4))
     }
