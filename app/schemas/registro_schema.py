@@ -4,7 +4,6 @@ from datetime import datetime
 class RegistroBase(BaseModel):
     RIDAGEYR: int
     RIAGENDR: int
-    RIDRETH1: int
     BMXBMI: float
     BMXWAIST: float
     MCQ300C: int

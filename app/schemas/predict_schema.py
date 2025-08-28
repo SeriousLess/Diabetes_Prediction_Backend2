@@ -3,7 +3,6 @@ from pydantic import BaseModel, Field
 class PredictRequest(BaseModel):
     RIDAGEYR: int
     RIAGENDR: int
-    RIDRETH1: int
     BMXBMI: float
     BMXWAIST: float
     MCQ300C: int

@@ -71,7 +71,6 @@ def obtener_historial(
             
             "RIDAGEYR": r.RIDAGEYR,
             "RIAGENDR": r.RIAGENDR,
-            "RIDRETH1": r.RIDRETH1,
             "BMXBMI": r.BMXBMI,
             "BMXWAIST": r.BMXWAIST,
             "MCQ300C": r.MCQ300C,

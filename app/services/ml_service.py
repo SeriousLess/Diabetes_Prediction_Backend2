@@ -15,7 +15,7 @@ imputer = joblib.load(MODELS_PATH / "imputador.pkl")
 
 # Columnas esperadas
 COLUMNAS = [
-    "RIDAGEYR", "RIAGENDR", "RIDRETH1", "BMXBMI", "BMXWAIST",
+    "RIDAGEYR", "RIAGENDR", "BMXBMI", "BMXWAIST",
     "MCQ300C", "PAQ605", "SMQ020", "DMDEDUC2", "INDHHIN2",
     "SLD010H", "HSD010"
 ]
