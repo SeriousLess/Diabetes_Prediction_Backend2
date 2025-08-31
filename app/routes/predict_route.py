@@ -11,6 +11,8 @@ from app.services.ml_service import predecir_diabetes
 from app.auth.auth_service import get_current_user
 from typing import List
 
+from app.services.ml_service_ns import predecir_cluster
+
 router = APIRouter(prefix="/prediccion", tags=["Predicción"])
 
 # Dependencia de base de datos
@@ -21,20 +23,22 @@ def get_db():
     finally:
         db.close()
 
+
 @router.post("/", response_model=PredictResponse)
 def obtener_prediccion(
     request: PredictRequest,
     db: Session = Depends(get_db),
     current_user: Optional[User] = Depends(get_current_user_optional)
 ):
-    # Ejecutar predicción con ML
-    resultado = predecir_diabetes(request.dict())
+    # Ejecutar predicción con modelo supervisado
+    resultado_s = predecir_diabetes(request.dict())
+    prediccion = int(resultado_s["prediccion"])
+    probabilidad = float(resultado_s["probabilidad"])
 
-    # ⚠️ Convertir a tipos nativos de Python para evitar "np.float64"
-    prediccion = int(resultado["prediccion"])
-    probabilidad = float(resultado["probabilidad"])
+    # Ejecutar predicción con modelo no supervisado
+    resultado_ns = predecir_cluster(request.dict())
 
-    # Guardar registro en la base de datos
+    # Guardar registro en la base de datos (solo resultado supervisado)
     registro = Registro(
         user_id=current_user.id if current_user else None,
         **request.dict(),
@@ -44,8 +48,13 @@ def obtener_prediccion(
     db.add(registro)
     db.commit()
 
-    # Retornar respuesta
-    return PredictResponse(prediccion=prediccion, probabilidad=probabilidad)
+    # Retornar respuesta combinada usando schema
+    return PredictResponse(
+        supervisado={"prediccion": prediccion, "probabilidad": probabilidad},
+        no_supervisado=resultado_ns
+    )
+
+
 
 @router.get("/historial", response_model=List[dict])
 def obtener_historial(
@@ -103,3 +112,4 @@ def eliminar_registro(
     db.delete(registro)
     db.commit()
     return {"message": "Registro eliminado correctamente"}
+
