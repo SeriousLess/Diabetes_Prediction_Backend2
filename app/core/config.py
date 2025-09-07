@@ -6,6 +6,7 @@ class Settings(BaseSettings):
     algorithm: str
     access_token_expire_minutes: int
     cors_origins: str | None = None  # se lee como string: "http://...,https://..."
+    recaptcha_secret: str  # 👈 agregado
 
     class Config:
         env_file = ".env"

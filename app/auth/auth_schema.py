@@ -8,6 +8,7 @@ class UserCreate(BaseModel):
 class UserLogin(BaseModel):
     username: str
     password: str
+    token: str   # 👈 Aquí añadimos el campo del captcha
 
 class Token(BaseModel):
     access_token: str
