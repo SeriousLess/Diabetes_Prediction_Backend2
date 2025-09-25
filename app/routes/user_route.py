@@ -8,6 +8,13 @@ from app.auth import auth_service
 from app.auth.auth_schema import UserCreate, UserLogin, Token
 from app.models.user_model import User
 
+from app.schemas.user_schema import UserUpdate, UserResponse
+
+from app.database.connection import get_db
+
+from app.auth.auth_service import get_current_user
+
+
 router = APIRouter(prefix="/users", tags=["Usuarios"])
 
 # Clave secreta de reCAPTCHA (ponla en tu .env)
@@ -32,8 +39,9 @@ def signup(user: UserCreate, db: Session = Depends(auth_service.get_db)):
     db.commit()
     db.refresh(new_user)
 
+    # 🔹 Ahora el token se crea con el ID del usuario
     access_token = auth_service.create_access_token(
-        data={"sub": new_user.username}
+        data={"sub": str(new_user.id)}
     )
     return {"access_token": access_token, "token_type": "bearer"}
 
@@ -59,10 +67,10 @@ def login(user: UserLogin, db: Session = Depends(auth_service.get_db)):
             detail="Credenciales inválidas"
         )
 
-    # 3. Crear token de acceso
+    # 3. Crear token con el ID
     access_token_expires = timedelta(minutes=auth_service.ACCESS_TOKEN_EXPIRE_MINUTES)
     access_token = auth_service.create_access_token(
-        data={"sub": db_user.username},
+        data={"sub": str(db_user.id)},
         expires_delta=access_token_expires
     )
 
@@ -73,4 +81,48 @@ def login(user: UserLogin, db: Session = Depends(auth_service.get_db)):
 # -------------------
 @router.get("/me")
 def read_users_me(current_user: User = Depends(auth_service.get_current_user)):
-    return {"username": current_user.username, "email": current_user.email}
+    return {"id": current_user.id, "username": current_user.username, "email": current_user.email}
+
+# -------------------
+# Actualizar perfil
+# -------------------
+
+@router.put("/me")
+def update_user(
+    user_update: UserUpdate,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user)
+):
+    print("📩 Datos recibidos:", user_update.dict())
+
+    # Cargar al usuario dentro de esta sesión
+    db_user = db.query(User).filter(User.id == current_user.id).first()
+    if not db_user:
+        raise HTTPException(status_code=404, detail="Usuario no encontrado")
+
+    # Validación de correo
+    if user_update.email:
+        existing_user = db.query(User).filter(
+            User.email == user_update.email,
+            User.id != current_user.id
+        ).first()
+        if existing_user:
+            raise HTTPException(
+                status_code=400,
+                detail="El correo ya está en uso por otra cuenta"
+            )
+
+    # Actualizar
+    if user_update.username:
+        db_user.username = user_update.username
+    if user_update.email:
+        db_user.email = user_update.email
+
+    db.commit()
+    db.refresh(db_user)
+
+    return {
+        "id": db_user.id,
+        "username": db_user.username,
+        "email": db_user.email
+    }
