@@ -6,7 +6,16 @@ class Settings(BaseSettings):
     algorithm: str
     access_token_expire_minutes: int
     cors_origins: str | None = None  # se lee como string: "http://...,https://..."
-    recaptcha_secret: str  # 👈 agregado
+    recaptcha_secret: str  
+
+    # 👇 credenciales de correo
+    mail_username: str
+    mail_password: str
+    mail_from: str | None = None  # opcional, si quieres diferenciar remitente
+    mail_port: int = 587
+    mail_server: str = "smtp.gmail.com"
+    mail_starttls: bool = True   # 👈 nombre correcto para fastapi-mail
+    mail_ssl_tls: bool = False   # 👈 nombre correcto para fastapi-mail
 
     class Config:
         env_file = ".env"
@@ -17,6 +26,5 @@ class Settings(BaseSettings):
         if self.cors_origins:
             return [origin.strip() for origin in self.cors_origins.split(",")]
         return []
-        
 
 settings = Settings()

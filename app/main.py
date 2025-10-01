@@ -4,7 +4,7 @@ from app.core.config import settings
 
 from app.database.connection import Base, engine
 from app.models import registro_model
-from app.routes import user_route, predict_route
+from app.routes import user_route, predict_route, mail_route
 
 Base.metadata.create_all(bind=engine)
 
@@ -22,6 +22,7 @@ app.add_middleware(
 
 app.include_router(user_route.router)
 app.include_router(predict_route.router)
+app.include_router(mail_route.router)
 
 @app.get("/")
 def root():
