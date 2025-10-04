@@ -1,6 +1,5 @@
 from fastapi import APIRouter, Depends, Body
 from fastapi.responses import JSONResponse
-from fastapi_mail import FastMail, MessageSchema, ConnectionConfig
 from app.models.user_model import User
 from app.auth.auth_service import get_current_user
 import os
@@ -8,22 +7,13 @@ import tempfile
 import base64
 import shutil
 from dotenv import load_dotenv
+import sib_api_v3_sdk
+from sib_api_v3_sdk.rest import ApiException
+from app.core.mail_config import configuration, mail_from
 
-# 👇 Cargar variables de entorno
 load_dotenv()
 
 router = APIRouter(prefix="/mail")
-
-conf = ConnectionConfig(
-    MAIL_USERNAME=os.getenv("MAIL_USERNAME"),
-    MAIL_PASSWORD=os.getenv("MAIL_PASSWORD"),
-    MAIL_FROM=os.getenv("MAIL_FROM"),
-    MAIL_PORT=int(os.getenv("MAIL_PORT")),
-    MAIL_SERVER=os.getenv("MAIL_SERVER"),
-    MAIL_STARTTLS=os.getenv("MAIL_STARTTLS") == "True",
-    MAIL_SSL_TLS=os.getenv("MAIL_SSL_TLS") == "True",
-    USE_CREDENTIALS=True,
-)
 
 @router.post("/send-pdf")
 async def send_pdf(
@@ -37,27 +27,34 @@ async def send_pdf(
         if not email or not pdf_base64:
             return JSONResponse(status_code=400, content={"detail": "Faltan datos (email o pdf_content)"})
 
-        # 📂 Crear archivo temporal con nombre fijo
+        # 📂 Crear archivo temporal
         with tempfile.NamedTemporaryFile(delete=False, suffix=".pdf") as tmp:
             pdf_bytes = base64.b64decode(pdf_base64)
             tmp.write(pdf_bytes)
             tmp_path = tmp.name
 
-        # 🔹 Copiar a un archivo con nombre más bonito
         final_path = os.path.join(tempfile.gettempdir(), "resultado-diabetes.pdf")
         shutil.copy(tmp_path, final_path)
 
-        # 📧 Preparar mensaje
-        message = MessageSchema(
+        # 📧 Configurar API
+        api_instance = sib_api_v3_sdk.TransactionalEmailsApi(sib_api_v3_sdk.ApiClient(configuration))
+
+        # Adjuntar PDF como base64
+        with open(final_path, "rb") as f:
+            encoded_pdf = base64.b64encode(f.read()).decode()
+
+        send_smtp_email = sib_api_v3_sdk.SendSmtpEmail(
+            to=[{"email": email}],
+            sender={"email": mail_from, "name": "Sistema Diabetes"},
             subject="📄 Tu PDF adjunto",
-            recipients=[email],
-            body=f"Hola {current_user.username}, aquí tienes tu PDF adjunto ✅",
-            attachments=[final_path],  # 👉 adjuntamos el archivo con nombre fijo
-            subtype="plain"
+            html_content=f"<p>Hola <b>{current_user.username}</b>, aquí tienes tu PDF adjunto ✅</p>",
+            attachment=[{
+                "content": encoded_pdf,
+                "name": "resultado-diabetes.pdf"
+            }]
         )
 
-        fm = FastMail(conf)
-        await fm.send_message(message)
+        api_instance.send_transac_email(send_smtp_email)
 
         # 🗑️ Limpiar archivos temporales
         os.remove(tmp_path)
@@ -65,5 +62,7 @@ async def send_pdf(
 
         return JSONResponse(content={"message": f"Correo enviado a {email}"})
 
+    except ApiException as e:
+        return JSONResponse(status_code=500, content={"detail": f"Error Brevo API: {str(e)}"})
     except Exception as e:
         return JSONResponse(status_code=500, content={"detail": f"Error enviando correo: {str(e)}"})
