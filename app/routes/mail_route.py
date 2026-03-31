@@ -21,6 +21,8 @@ async def send_pdf(
     current_user: User = Depends(get_current_user)
 ):
     try:
+        print("API KEY:", os.getenv("BREVO_API_KEY"))
+        print("MAIL FROM:", os.getenv("MAIL_FROM"))
         email = data.get("email")
         pdf_base64 = data.get("pdf_content")
 
