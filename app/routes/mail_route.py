@@ -21,8 +21,14 @@ async def send_pdf(
     current_user: User = Depends(get_current_user)
 ):
     try:
+        
+        #####
+        
         print("API KEY:", os.getenv("BREVO_API_KEY"))
         print("MAIL FROM:", os.getenv("MAIL_FROM"))
+        
+        #####
+        
         email = data.get("email")
         pdf_base64 = data.get("pdf_content")
 
@@ -64,7 +70,12 @@ async def send_pdf(
 
         return JSONResponse(content={"message": f"Correo enviado a {email}"})
 
+    #except ApiException as e:
+    #    return JSONResponse(status_code=500, content={"detail": f"Error Brevo API: {str(e)}"})
     except ApiException as e:
-        return JSONResponse(status_code=500, content={"detail": f"Error Brevo API: {str(e)}"})
+        print("BREVO ERROR BODY:", e.body)
+        print("BREVO ERROR:", str(e))
+        return JSONResponse(status_code=500, content={"detail": e.body})
+    
     except Exception as e:
         return JSONResponse(status_code=500, content={"detail": f"Error enviando correo: {str(e)}"})
