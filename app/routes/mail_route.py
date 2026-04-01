@@ -24,8 +24,8 @@ async def send_pdf(
         
         #####
         
-        print("API KEY:", os.getenv("BREVO_API_KEY"))
-        print("MAIL FROM:", os.getenv("MAIL_FROM"))
+        #print("API KEY:", os.getenv("BREVO_API_KEY"))
+        #print("MAIL FROM:", os.getenv("MAIL_FROM"))
         
         #####
         
